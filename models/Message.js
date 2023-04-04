@@ -2,22 +2,28 @@ const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema(
   {
-    conversation_id: {
+    conversationId: {
       type: String,
       require: true,
     },
-    sender_id: {
+    senderId: {
       type: String,
+      ref: "User",
       require: true,
     },
-    recipient_id: {
+    recipientId: {
       type: String,
+      ref: "User",
       require: true,
     },
     message: {
       type: String,
-      require: true,
     },
+    images: [
+      {
+        type: String,
+      },
+    ],
   },
   { timestamps: true }
 );

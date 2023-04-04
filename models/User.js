@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
   {
-    fullname: {
+    email: {
       type: String,
       require: true,
       min: 6,
@@ -16,10 +16,19 @@ const userSchema = new mongoose.Schema(
       max: 20,
       unique: true,
     },
+    usernameCode: {
+      type: Number,
+      require: true,
+      min: 4,
+    },
     password: {
       type: String,
       require: true,
       min: 6,
+    },
+    avatar: {
+      type: String,
+      default: 'uploads/admin/default_avatar/images.png',
     },
     isAdmin: {
       type: Boolean,
