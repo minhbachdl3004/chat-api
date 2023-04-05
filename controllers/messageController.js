@@ -1,23 +1,39 @@
 const Message = require("../models/Message");
+const cloudinary = require("../utils/cloudinary");
+
+// Define a function to upload a single file to Cloudinary
+const uploadFile = async (filePath) => {
+  const result = await cloudinary.uploader.upload(filePath);
+  return result;
+};
 
 //Sending message
 const createNewMessage = async (req, res) => {
   try {
     console.log(req.file);
-    const imagesArr = []
+    const imagesArr = [];
+    const imagesUrlArr = [];
     // Add the paths of the uploaded images to the images array
     if (req.files && req.files.length > 0) {
       req.files.forEach((file) => {
         imagesArr.push(file.path);
       });
     }
+
+    // Upload all files one by one using a loop
+    for (let i = 0; i < imagesArr.length; i++) {
+      const result = await cloudinary.uploader.upload(imagesArr[i]);
+      console.log("Upload result:", result);
+      imagesUrlArr.push(result.url);
+    }
+
     const newMessage = await new Message({
       conversationId: req.body.conversationId,
       senderId: req.body.senderId,
       recipientId: req.body.recipientId,
       message: req.body.message,
-      images: imagesArr
-    }).populate('senderId', 'id username usernameCode avatar');
+      images: imagesUrlArr,
+    }).populate("senderId", "id username usernameCode avatar");
 
     // Save new message to DB
     const message = await newMessage.save();
@@ -26,6 +42,7 @@ const createNewMessage = async (req, res) => {
     res.status(500).json(error);
   }
 };
+
 
 const getAllMessages = async (req, res) => {
   try {
@@ -38,11 +55,11 @@ const getAllMessages = async (req, res) => {
     const messages = await Message.find({
       conversationId: req.params.id,
     })
-      .populate('senderId', 'id username usernameCode avatar')
+      .populate("senderId", "id username usernameCode avatar")
       .sort({ createdAt: -1 })
       .skip((page - 1) * perPage)
       .limit(perPage);
-      
+
     if (!messages) {
       res.status(404).json("Not found conversation");
       return;
@@ -70,7 +87,7 @@ const deleteMessageById = async (req, res) => {
   } catch (error) {
     res.status(500).json(error);
   }
-}
+};
 
 module.exports = {
   createNewMessage,

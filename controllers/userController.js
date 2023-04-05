@@ -2,6 +2,7 @@ const { ObjectId } = require("mongodb");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const authController = require("./authController");
+const cloudinary = require("../utils/cloudinary")
 
 const userController = {
   // GET ALL USERS WITH PAGINATION
@@ -60,6 +61,7 @@ const userController = {
     const { userId } = req.query;
     try {
       const user = await User.findById(userId)
+      console.log(user);
       if (!user) {
         res.status(404).json("User not found!");
         return;
@@ -145,12 +147,36 @@ const userController = {
   },
 
   //Update Avatar
-  updateAvatar: async (req, res) => {
+  uploadAvatar: async (req, res) => {
     try {
+      const { userId } = req.body;
+      const result = await cloudinary.uploader.upload(req.file.path)
+      console.log(result);
+      console.log(req.body);
+      const user = await User.findByIdAndUpdate(userId, {
+        avatar: result.url,
+      });
+      const userUpdatedAvatar = await User.findById(userId);
+      if (!user) {
+        res.status(404).json("User not found!");
+        return;
+      }
+      const newUser = await userUpdatedAvatar.save();
+      const accessToken = authController.generateAccessToken(newUser);
+  
+      res.status(200).json({
+        accessToken,
+        updateProfile: {
+          _id: newUser._id,
+          username: newUser.username,
+          usernameCode: newUser.usernameCode,
+          avatar: newUser.avatar,
+        },
+      });
     } catch (error) {
-      
+      res.status(500).json(error);
     }
-  }
+  },
 };
 
 module.exports = userController;

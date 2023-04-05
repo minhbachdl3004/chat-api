@@ -2,40 +2,7 @@ const messageController = require("../controllers/messageController");
 const { verifyToken } = require("../controllers/middlewareController");
 const multer = require("multer");
 const fs = require("fs");
-
-function generateId() {
-  const min = 1000000000000; // smallest 19-digit number
-  const max = 9999999999999; // largest 19-digit number
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const userId = req.body.senderId;
-    const dest = `uploads/attachments/${userId}/`;
-    if (!fs.existsSync(dest)) {
-      fs.mkdir(dest, { recursive: true });
-    }
-    cb(null, dest);
-  },
-  filename: function (req, file, cb) {
-    console.log(req.body.senderId);
-    cb(null, generateId() + "_" + file.originalname);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  // reject a file
-  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
-
-const upload = multer({
-  storage: storage,
-})
+const upload = require("../utils/multer")
 
 const router = require("express").Router();
 
