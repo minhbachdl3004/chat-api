@@ -28,7 +28,7 @@ const userSchema = new mongoose.Schema(
     },
     avatar: {
       type: String,
-      default: 'uploads/admin/default_avatar/images.png',
+      default: 'https://support.discord.com/hc/user_images/l12c7vKVRCd-XLIdDkLUDg.png',
     },
     isAdmin: {
       type: Boolean,
