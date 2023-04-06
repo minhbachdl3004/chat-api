@@ -25,9 +25,6 @@ app.use("/api/user", userRoute);
 app.use("/api/conversation", conversationRoute);
 app.use("/api/message", messageRoute);
 app.use("/api/friend", friendRoute);
-app.use("/", (req, res) => {
-  res.send("Welcome to my channel")
-})
 
 mongoose.connect(process.env.DATABASE_URL, { useNewurlParser: true }, () => {
   console.log("Connected to Mongodb");
