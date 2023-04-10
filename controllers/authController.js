@@ -53,7 +53,7 @@ const authController = {
       const user = await User.findOne({ email: email });
       console.log(user);
       if (!user) {
-        res.status(404).json("User not found");
+        res.status(404).json("Email or password is invalid");
         return;
       }
       const validPassword = await bcrypt.compare(
@@ -61,7 +61,7 @@ const authController = {
         user.password
       );
       if (!validPassword) {
-        res.status(404).json("Incorrect password");
+        res.status(404).json("Email or password is invalid");
         return;
       }
       if (user && validPassword) {

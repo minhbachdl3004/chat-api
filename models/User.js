@@ -14,7 +14,6 @@ const userSchema = new mongoose.Schema(
       require: true,
       min: 6,
       max: 20,
-      unique: true,
     },
     usernameCode: {
       type: Number,

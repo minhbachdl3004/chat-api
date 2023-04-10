@@ -3,11 +3,10 @@ const Friend = require("../models/Friend");
 const Conversation = require("../models/Conversation");
 const User = require("../models/User");
 
-
 const generateConversationId = () => {
   const randomNumber =
     Math.floor(Math.random() * 9000000000000000000) + 1000000000000000000;
-  return randomNumber.toString()
+  return randomNumber.toString();
 };
 
 //Create a Friend Request from user
@@ -22,7 +21,11 @@ const createFriendRequest = async (req, res) => {
 
     // Check if recipient user exists
     if (!recipient) {
-      res.status(404).json("User not found");
+      res
+        .status(404)
+        .json(
+          "Hm, didn't work. Double check that the capitalization, spelling, any spaces, and numbers are correct"
+        );
       return;
     }
     const recipientId = recipient._id.toString();
@@ -39,15 +42,17 @@ const createFriendRequest = async (req, res) => {
       recipient: recipientId,
     });
     if (existingFriendRequest) {
-      res.status(400).json(`Success! Your friend request to ${recipientName} was sent!`);
+      res
+        .status(400)
+        .json(`You've already sent friend request to ${recipientName}`);
       return;
     }
 
     //Check if 2 users already firend
     const existingFriendship = await Conversation.findOne({
       $or: [
-        { sender: senderId, recipient: recipientId, status: 'Friend' },
-        { sender: recipientId, recipient: senderId, status: 'Friend' },
+        { sender: senderId, recipient: recipientId, status: "Friend" },
+        { sender: recipientId, recipient: senderId, status: "Friend" },
       ],
     });
     if (existingFriendship) {
@@ -59,10 +64,16 @@ const createFriendRequest = async (req, res) => {
       sender: senderId.toString(),
       recipient: recipientId.toString(),
     });
-    await newFriendRequest.populate("sender recipient", "username usernameCode avatar")
+    await newFriendRequest.populate(
+      "sender recipient",
+      "username usernameCode avatar"
+    );
 
     const friendReqest = await newFriendRequest.save();
-    res.status(200).json(friendReqest);
+    res.status(200).json({
+      message: `Success! Your friend request to ${recipientName} was sent.`,
+      friendRequest: friendReqest,
+    });
   } catch (error) {
     res.status(500).json(error);
   }
@@ -110,7 +121,7 @@ const acceptRequest = async (req, res) => {
       recipient: recipient.toString(),
     });
 
-    const conversationId = generateConversationId()
+    const conversationId = generateConversationId();
 
     if (!conversation) {
       const conversationForSender = new Conversation({
@@ -126,15 +137,21 @@ const acceptRequest = async (req, res) => {
         recipient: sender.toString(),
         status: "Friend",
       });
-      
+
       //Create New Conversation between two friends
       const senderConversation = await conversationForSender.save();
       const recipientConversation = await conversationForRecipient.save();
-      await senderConversation.populate('recipient', '_id username usernameCode avatar');
-      await recipientConversation.populate('recipient', '_id username usernameCode avatar');
+      await senderConversation.populate(
+        "recipient",
+        "_id username usernameCode avatar"
+      );
+      await recipientConversation.populate(
+        "recipient",
+        "_id username usernameCode avatar"
+      );
       res.status(200).json({
         sender: senderConversation,
-        recipient: recipientConversation
+        recipient: recipientConversation,
       });
     }
 
