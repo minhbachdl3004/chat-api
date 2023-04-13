@@ -2,7 +2,11 @@ const { ObjectId } = require("mongodb");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const authController = require("./authController");
-const cloudinary = require("../utils/cloudinary")
+const cloudinary = require("../utils/cloudinary");
+const Token = require("../models/token");
+const sendMail = require("../utils/sendEmail");
+const jwt = require("jsonwebtoken");
+const jwt_decode = require("jwt-decode");
 
 const userController = {
   // GET ALL USERS WITH PAGINATION
@@ -23,7 +27,7 @@ const userController = {
         const { password, ...others } = user._doc;
         return { ...others };
       });
-      
+
       res.status(200).json({
         users,
         pagination: {
@@ -60,7 +64,7 @@ const userController = {
   getUserByUserID: async (req, res) => {
     const { userId } = req.query;
     try {
-      const user = await User.findById(userId)
+      const user = await User.findById(userId);
       console.log(user);
       if (!user) {
         res.status(404).json("User not found!");
@@ -85,13 +89,18 @@ const userController = {
         user.password
       );
       if (!validPassword) {
-        res.status(400).json({name: "Current Password", msg: "Password does not match."});
+        res
+          .status(400)
+          .json({ name: "Current Password", msg: "Password does not match." });
         return;
       }
 
       if (newUsername) {
         if (newUsername.length < 2) {
-          res.status(400).json({name: "username", msg: "Must be between 2 and 32 in length."});
+          res.status(400).json({
+            name: "username",
+            msg: "Must be between 2 and 32 in length.",
+          });
           return;
         }
         user.username = newUsername;
@@ -107,12 +116,15 @@ const userController = {
 
       const accessToken = authController.generateAccessToken(user);
 
-      res.status(200).json({ accessToken, updateProfile: {
-        _id: user._id,
-        username: user.username,
-        usernameCode: user.usernameCode,
-        avatar: user.avatar,
-      }, });
+      res.status(200).json({
+        accessToken,
+        updateProfile: {
+          _id: user._id,
+          username: user.username,
+          usernameCode: user.usernameCode,
+          avatar: user.avatar,
+        },
+      });
     } catch (error) {
       res.status(500).json(error);
     }
@@ -123,6 +135,75 @@ const userController = {
     try {
       const user = await User.findById(req.params.id);
       res.status(200).json("Success delete user");
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  },
+
+  //SEND MAIL FOR RESET PASSWORD
+  sendMailToResetPassword: async (req, res) => {
+    try {
+      const { email } = req.body;
+      console.log(email);
+      const user = await User.findOne({ email: email });
+      if (!user) {
+        res.status(400).json("User with given email doesn't exist");
+        return;
+      }
+      let token = await Token.findOne({ email: email });
+      if (!token) {
+        token = await new Token({
+          email: email,
+          token: jwt.sign(
+            {
+              id: user.id,
+              email: user.email,
+              username: user.username,
+            },
+            process.env.JWT_ACCESS_KEY
+          ),
+        }).save();
+      }
+      const link = `${process.env.BASE_URL}/reset-password#${token.token}`;
+      await sendMail(email, "Password Reset Request for Discord Clone", link);
+
+      res.status(200).json("password reset link sent to your email account");
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  },
+
+  //RESET PASSWORD
+  resetPassword: async (req, res) => {
+    try {
+      const { token } = req.params;
+      const decoded = jwt_decode(token);
+
+      const user = await User.findOne({ email: decoded.email });
+      if (!user) {
+        res.status(400).json("Token has expired");
+        return;
+      }
+
+      const validToken = await Token.findOne({
+        email: decoded.email,
+        token: token,
+      });
+      if (!validToken) {
+        res.status(400).json("Token has expired");
+        return;
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(req.body.password, salt);
+      user.password = hashedPassword;
+
+      await user.save();
+      await validToken.delete();
+
+      const accessToken = authController.generateAccessToken(user);
+
+      res.status(200).json({ accessToken: accessToken });
     } catch (error) {
       res.status(500).json(error);
     }
@@ -150,7 +231,7 @@ const userController = {
   uploadAvatar: async (req, res) => {
     try {
       const { userId } = req.body;
-      const result = await cloudinary.uploader.upload(req.file.path)
+      const result = await cloudinary.uploader.upload(req.file.path);
       console.log(result);
       console.log(req.body);
       const user = await User.findByIdAndUpdate(userId, {
@@ -163,7 +244,7 @@ const userController = {
       }
       const newUser = await userUpdatedAvatar.save();
       const accessToken = authController.generateAccessToken(newUser);
-  
+
       res.status(200).json({
         accessToken,
         updateProfile: {

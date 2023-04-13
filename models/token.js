@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
 
 const tokenSchema = new mongoose.Schema({
-  userId: {
-    type: Schema.Types.ObjectId,
-    required: true,
+  email: {
+    type: String,
     ref: "User",
+    require: true,
+    unique: true,
   },
   token: {
     type: String,
-    required: true,
+    require: true,
   },
   createdAt: {
     type: Date,

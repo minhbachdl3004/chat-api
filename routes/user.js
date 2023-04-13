@@ -27,6 +27,12 @@ router.put("/avatar/update", verifyToken, upload.single("avatar"), userControlle
 //UPDATE PROFILE
 router.put("/update/:id", verifyToken, userController.updateUserProfile)  
 
+//SEND MAIL TO RESET PASSWORD
+router.post("/reset-password", userController.sendMailToResetPassword)
+
+//RESET PASSWORD
+router.post("/reset-password/:token", userController.resetPassword)
+
 // router.get("/get-all/avatar", uploadController.getListFiles);
 
 module.exports = router;
