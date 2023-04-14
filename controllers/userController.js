@@ -165,7 +165,7 @@ const userController = {
         }).save();
       }
       const link = `${process.env.BASE_URL}/reset-password#${token.token}`;
-      await sendMail(email, "Password Reset Request for Discord Clone", link);
+      await sendMail(email, "Password Reset Request for Discord Clone", link, user.username);
 
       res.status(200).json("password reset link sent to your email account");
     } catch (error) {
