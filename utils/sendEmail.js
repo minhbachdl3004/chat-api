@@ -34,6 +34,7 @@ const sendMail = async (email, subject, link, username) => {
         </style>
       </head>
       <body>
+      <div style="width:950px; height: 362px; background-color: #f9f9f9;">
         <table
           cellpadding="0"
           cellspacing="0"
@@ -120,6 +121,7 @@ const sendMail = async (email, subject, link, username) => {
             </td>
           </tr>
         </table>
+      </div>
       </body>
     </html>`,
     };
