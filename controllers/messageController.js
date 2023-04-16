@@ -46,6 +46,7 @@ const createNewMessage = async (req, res) => {
 
 const getAllMessages = async (req, res) => {
   try {
+    const { userId } = req.query;
     const page = parseInt(req.query.page) || 1;
     const perPage = 50;
 
@@ -54,13 +55,14 @@ const getAllMessages = async (req, res) => {
 
     const messages = await Message.find({
       conversationId: req.params.id,
+      $or: [{ senderId: userId }, { recipientId: userId }]
     })
       .populate("senderId", "id username usernameCode avatar")
       .sort({ createdAt: -1 })
       .skip((page - 1) * perPage)
       .limit(perPage);
 
-    if (!messages) {
+    if (messages.length === 0) {
       res.status(404).json("Not found conversation");
       return;
     }
