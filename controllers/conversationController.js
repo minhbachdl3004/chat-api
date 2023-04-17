@@ -42,7 +42,6 @@ const getConversationByUserId = async (req, res) => {
     if (!conversations) {
       res.status(404).json("No conversations found for user");
     }
-
     res.status(200).json(conversations);
   } catch (error) {
     res.status(500).json(error);
@@ -51,15 +50,15 @@ const getConversationByUserId = async (req, res) => {
 
 const getConversationByConversationId = async (req, res) => {
   try {
-    const { conversationId } = req.query;
-    const conversations = await Conversation.find({
+    const { conversationId, userId } = req.query;
+    const conversation = await Conversation.find({
       conversationId: conversationId,
+      sender: userId,
     }).populate('sender recipient', '_id username usernameCode avatar')
-    if (!conversations) {
-      res.status(404).json("No conversations found for user");
+    if (conversation.length > 0) {
+      return res.status(200).json(conversation);
     }
-
-    res.status(200).json(conversations);
+    return res.status(404).json("No conversation found for user");
   } catch (error) {
     res.status(500).json(error);
   }

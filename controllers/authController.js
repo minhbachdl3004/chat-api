@@ -47,6 +47,17 @@ const authController = {
     );
   },
 
+  generateRefreshToken: (user) => {
+    return jwt.sign(
+      {
+        id: user.id,
+        username: user.username,
+      },
+      process.env.JWT_REFRESH_KEY,
+      { expiresIn: "365d" }
+    );
+  },
+
   //LOGIN
   loginUser: async (req, res) => {
     const { email, password } = req.body;
@@ -75,6 +86,22 @@ const authController = {
       res.status(500).json(err);
     }
   },
+
+  //REQUEST FOR REFRESH TOKEN
+  requestForRefreshToken: async (req, res) => {
+
+    try {
+      const refreshToken = req.body.refreshToken;
+  
+      if (!refreshToken) return res.status(401).json("You're not authenticated!");
+      if (!refreshToken.includes(refreshToken)) {
+        return
+      }
+      
+    } catch (error) {
+      
+    }
+  }
 };
 
 module.exports = authController;
